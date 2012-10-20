@@ -1,6 +1,7 @@
 """
 Save item value to memcache to improve performance.
 """
+import json
 import logging
 from google.appengine.api import memcache
 from google.appengine.ext import db
@@ -17,7 +18,9 @@ class ConfigManager(object):
     def getRawItems(self):
         items = []
         for item in self.modelclass.all():
-            items.append({'key': item.key().name(), 'value': item.value,})
+            jsonobj = json.loads(item.value)
+            fstr = json.dumps(jsonobj, ensure_ascii=False, indent=4)
+            items.append({'key': item.key().name(), 'value': fstr,})
         return items
 
     def _getCacheKey(self, keyname):
