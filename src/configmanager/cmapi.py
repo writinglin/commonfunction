@@ -8,6 +8,7 @@ from google.appengine.ext import db
 
 import jsonpickle
 
+from commonutil import jsonutil
 from . import models
 
 class ConfigManager(object):
@@ -19,7 +20,7 @@ class ConfigManager(object):
         items = []
         for item in self.modelclass.all():
             jsonobj = json.loads(item.value)
-            fstr = json.dumps(jsonobj, ensure_ascii=False, indent=4)
+            fstr = jsonutil.getReadableString(jsonobj)
             items.append({'key': item.key().name(), 'value': fstr,})
         return items
 
