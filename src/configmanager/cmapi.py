@@ -45,9 +45,10 @@ class ConfigManager(object):
         jsonvalue = memcache.get(cachekey)
         if not jsonvalue:
             configitem = self.modelclass.get_by_key_name(keyname)
-            if not configitem:
-                return defaultValue
-            jsonvalue = jsonpickle.decode(configitem.value)
+            if configitem:
+                jsonvalue = jsonpickle.decode(configitem.value)
+            else:
+                jsonvalue = defaultValue
             self._setCache(cachekey, jsonvalue)
         return jsonvalue
 
