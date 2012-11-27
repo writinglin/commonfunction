@@ -4,8 +4,41 @@ import logging
 import urllib2
 
 import chardet
+import lxml.html
 
 import contentfetcher.config as globalconfig
+
+def _getEncodingFromContentType(contentType):
+    if not contentType:
+        return None
+    parts = contentType.split('charset=', 1)
+    if len(parts) > 1:
+        return parts[1].strip()
+    return None
+
+def getEncodingFromResponse(res):
+    contentType = res.info().getheader('Content-Type')
+    return _getEncodingFromContentType(contentType)
+
+def getEncodingFromContent(content):
+    doc = lxml.html.fromstring(content)
+    logging.info('49')
+    nodes = doc.findall("//meta")
+    logging.info('44')
+    for node in nodes:
+        logging.info('40')
+        equiv = node.attrib.get('http-equiv')
+        logging.info('4')
+        if equiv.lower() == 'content-type':
+            contentType = node.text_content()
+            return _getEncodingFromContentType(contentType)
+    return None
+
+def getEncodingByChardet(content):
+    detectResult = chardet.detect(content)
+    if detectResult:
+        return detectResult['encoding']
+    return None
 
 class ContentFetcher(object):
     def __init__(self, url, header=None, encoding=None, tried=0):
@@ -34,19 +67,28 @@ class ContentFetcher(object):
             handler = urllib2.HTTPHandler()
             opener = urllib2.build_opener(handler)
             res = opener.open(req, timeout=self.timeout)
+            httpheaderEncoding = getEncodingFromResponse(res)
             content = res.read()
             res.close()
-            encodingUsed = self.encoding
-            if not encodingUsed:
-            	detectResult = chardet.detect(content)
-                if detectResult:
-                    encodingUsed = detectResult['encoding']
-                if not encodingUsed:
-                    encodingUsed = 'utf-8'
-                    logging.error('chardet failed to detect encoding from %s.' % (fetchUrl,))
-            return fetchUrl, encodingUsed, unicode(content, encodingUsed,'ignore')
+            # contentEncoding = getEncodingFromContent(content)
+            chardetEncoding = getEncodingByChardet(content)
+            ucontent = None
+            encodings = [httpheaderEncoding, chardetEncoding]
+            for encoding in encodings:
+                if not encoding:
+                    continue
+                try:
+                    ucontent = unicode(content, encoding)
+                    encodingUsed = encoding
+                    break
+                except:
+                    pass
+            if not ucontent and chardetEncoding:
+                ucontent = unicode(content, chardetEncoding, 'ignore')
+                encodingUsed = chardetEncoding
+            return fetchUrl, encodingUsed, ucontent
         except Exception, err:
-            response = 'Error on fetching data from %s:%s.' % (self.url, err)
+            response = 'Error on fetching data from %s.' % (self.url, )
             logging.exception(response)
             return fetchUrl, encodingUsed, ''
 
