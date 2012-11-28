@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import base64
 import logging
+import re
 import urllib2
 
 import chardet
 import lxml.html
 
 import contentfetcher.config as globalconfig
+
+_PATTERN_MATCH_BODY = re.compile(r'^([\s\S]+)<body', re.IGNORECASE)
+_PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]+>', re.IGNORECASE)
+_PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]*>', re.IGNORECASE)
 
 def _getEncodingFromContentType(contentType):
     if not contentType:
@@ -21,17 +26,16 @@ def getEncodingFromResponse(res):
     return _getEncodingFromContentType(contentType)
 
 def getEncodingFromContent(content):
-    doc = lxml.html.fromstring(content)
-    logging.info('49')
-    nodes = doc.findall("//meta")
-    logging.info('44')
-    for node in nodes:
-        logging.info('40')
-        equiv = node.attrib.get('http-equiv')
-        logging.info('4')
-        if equiv.lower() == 'content-type':
-            contentType = node.text_content()
-            return _getEncodingFromContentType(contentType)
+    headerContent = None
+    m = _PATTERN_MATCH_BODY.search(content)
+    if m:
+        headerContent = m.group(1)
+    else:
+        headerContent = content
+    m = _PATTERN_MATCH_CONTENTTYPE.search(headerContent)
+    if m:
+        contentType = m.group(1)
+        return _getEncodingFromContentType(contentType)
     return None
 
 def getEncodingByChardet(content):
@@ -55,7 +59,7 @@ class ContentFetcher(object):
 
     def fetch(self):
         fetchUrl = None
-        encodingUsed = None
+        encodingUsed = self.encoding
         try:
             fetchUrl = self.url
             req = urllib2.Request(fetchUrl)
@@ -67,25 +71,24 @@ class ContentFetcher(object):
             handler = urllib2.HTTPHandler()
             opener = urllib2.build_opener(handler)
             res = opener.open(req, timeout=self.timeout)
-            httpheaderEncoding = getEncodingFromResponse(res)
+            # httpheaderEncoding = getEncodingFromResponse(res)
             content = res.read()
             res.close()
-            # contentEncoding = getEncodingFromContent(content)
-            chardetEncoding = getEncodingByChardet(content)
-            ucontent = None
-            encodings = [httpheaderEncoding, chardetEncoding]
-            for encoding in encodings:
-                if not encoding:
-                    continue
-                try:
-                    ucontent = unicode(content, encoding)
-                    encodingUsed = encoding
-                    break
-                except:
-                    pass
-            if not ucontent and chardetEncoding:
-                ucontent = unicode(content, chardetEncoding, 'ignore')
+
+            # encoding in page content is specified by developer,
+            # and we'd better trust developer.
+
+            # chardet can mislead by some mistaken character which is invisible for user.
+            # http://www.ftchinese.com/story/001047706 is an example
+            if not encodingUsed:
+                contentEncoding = getEncodingFromContent(content)
+                encodingUsed = contentEncoding
+            if not encodingUsed:
+                chardetEncoding = getEncodingByChardet(content)
                 encodingUsed = chardetEncoding
+            if not encodingUsed:
+                encodingUsed = 'UTF-8'
+            ucontent = unicode(content, encodingUsed, 'ignore')
             return fetchUrl, encodingUsed, ucontent
         except Exception, err:
             response = 'Error on fetching data from %s.' % (self.url, )
