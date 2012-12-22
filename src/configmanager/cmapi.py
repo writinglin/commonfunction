@@ -54,8 +54,6 @@ class ConfigManager(object):
 
     def saveItem(self, keyname, jsonvalue):
         cachekey = self._getCacheKey(keyname)
-        if not jsonvalue:
-            return True
         success = self._setCache(cachekey, jsonvalue)
         if success:# if we fail to save value to cache, we should not put it into db.
             strvalue = jsonpickle.encode(jsonvalue)
