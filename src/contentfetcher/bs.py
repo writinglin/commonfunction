@@ -9,9 +9,9 @@ import lxml.html
 
 import contentfetcher.config as globalconfig
 
-_PATTERN_MATCH_BODY = re.compile(r'^([\s\S]+)<body', re.IGNORECASE)
-_PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]+>', re.IGNORECASE)
-_PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]*>', re.IGNORECASE)
+_PATTERN_MATCH_BODY = re.compile(r'^([\s\S]+)<body', re.IGNORECASE|re.DOTALL)
+_PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
+_PATTERN_MATCH_ENCODING = re.compile(r'<meta[^>]+charset="([^>]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
 
 def _getEncodingFromContentType(contentType):
     if not contentType:
@@ -36,6 +36,10 @@ def getEncodingFromContent(content):
     if m:
         contentType = m.group(1)
         return _getEncodingFromContentType(contentType)
+    else:
+        m = _PATTERN_MATCH_ENCODING.search(headerContent)
+        if m:
+            return m.group(1).strip()
     return None
 
 def getEncodingByChardet(content):
