@@ -64,6 +64,7 @@ class ContentFetcher(object):
     def fetch(self):
         fetchUrl = None
         encodingUsed = self.encoding
+        encodingSrc = 'self'
         try:
             fetchUrl = self.url
             req = urllib2.Request(fetchUrl)
@@ -86,18 +87,21 @@ class ContentFetcher(object):
             # http://www.ftchinese.com/story/001047706 is an example
             if not encodingUsed:
                 contentEncoding = getEncodingFromContent(content)
+                encodingSrc = 'content'
                 encodingUsed = contentEncoding
             if not encodingUsed:
                 chardetEncoding = getEncodingByChardet(content)
                 encodingUsed = chardetEncoding
+                encodingSrc = 'chardet'
             if not encodingUsed:
                 encodingUsed = 'UTF-8'
+                encodingSrc = 'default'
             ucontent = unicode(content, encodingUsed, 'ignore')
-            return fetchUrl, encodingUsed, ucontent
+            return fetchUrl, encodingUsed + '-' + encodingSrc, ucontent
         except Exception, err:
             response = 'Error on fetching data from %s.' % (self.url, )
             logging.exception(response)
-            return fetchUrl, encodingUsed, ''
+            return fetchUrl, encodingUsed + '-' + encodingSrc, ''
 
 class BasicAuthContentFetcher(ContentFetcher):
     def __init__(self, url, username, password, encoding=None):
