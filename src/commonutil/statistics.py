@@ -6,10 +6,12 @@ from configmanager import cmapi
 
 def increaseIncomingBandwidth(bytes):
     inbandwidth = cmapi.getItemValue('inbandwidth', {})
+    nnow = datetime.datetime.now(tz=pytz.utc)
 
     allband = inbandwidth.get('all')
     if not allband:
         allband = {}
+        allband['start'] = nnow
         inbandwidth['all'] = allband
     allband['bytes'] = allband.get('bytes', 0) + bytes
     allband['fetch'] = allband.get('fetch', 0) + 1
@@ -19,10 +21,8 @@ def increaseIncomingBandwidth(bytes):
         timezonename = 'US/Pacific'
         inbandwidth['tz'] = timezonename
 
-    date_format = '%Y%m%d'
-    date = datetime.datetime.now(tz=pytz.utc)
-    date = date.astimezone(pytz.timezone(timezonename))
-    key = date.strftime(date_format)
+    tzdate = nnow.astimezone(pytz.timezone(timezonename))
+    key = tzdate.strftime('%Y%m%d')
 
     current = inbandwidth.get('current')
     if not current or current.get('key') != key:
