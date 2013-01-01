@@ -44,6 +44,7 @@ class BasicManager(object):
                 cachevalue = jsonpickle.decode(configitem.value)
             else:
                 cachevalue = configitem.value
+        logging.info('%s, %s' % (cachevalue, defaultValue))
         if cachevalue is None:
             cachevalue = defaultValue
         memcache.set(cachekey, cachevalue)
@@ -89,6 +90,7 @@ class ConfigManager(BasicManager):
             dbkey = item.key().name()
             if dbkey.endswith(PART_KEY_SUFFIX):
                 continue
+            # db key can be used as key name.
             value = self.getItemValue(dbkey)
             fstr = jsonutil.getReadableString(value)
             items.append({'key': dbkey, 'value': fstr,})
@@ -116,7 +118,8 @@ class ConfigManager(BasicManager):
         return partcount > 1
 
     def getItemValue(self, keyname, defaultValue=None):
-        mainValue = super(ConfigManager, self).getItemValue(keyname)
+        mainValue = super(ConfigManager, self).getItemValue(keyname,
+                                defaultValue=defaultValue)
         if not self._isBigItem(mainValue):
             return mainValue
         partcount = self._getPartCount(mainValue)
