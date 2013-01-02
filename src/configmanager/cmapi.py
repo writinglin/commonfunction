@@ -44,7 +44,6 @@ class BasicManager(object):
                 cachevalue = jsonpickle.decode(configitem.value)
             else:
                 cachevalue = configitem.value
-        logging.info('%s, %s' % (cachevalue, defaultValue))
         if cachevalue is None:
             cachevalue = defaultValue
         memcache.set(cachekey, cachevalue)
