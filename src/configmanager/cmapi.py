@@ -93,7 +93,7 @@ class ConfigManager(BasicManager):
             value = self.getItemValue(dbkey)
             fstr = jsonutil.getReadableString(value)
             items.append({'key': dbkey, 'value': fstr,})
-        return items
+        return sorted(items, key=lambda item: item['key'])
 
     def _getCacheKey(self, keyname, part=-1):
         cachekey = super(ConfigManager, self)._getCacheKey(keyname)
@@ -208,7 +208,7 @@ def registerModel(modelclass):
     REGISTERED_MODELS[modelclass.__name__] = manager
 
 def getModelNames():
-    return REGISTERED_MODELS.keys()
+    return sorted(REGISTERED_MODELS.keys())
 
 def _getManager(modelname):
     if not modelname:
