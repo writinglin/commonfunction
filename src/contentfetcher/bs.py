@@ -97,11 +97,11 @@ class ContentFetcher(object):
                 encodingUsed = 'UTF-8'
                 encodingSrc = 'default'
             ucontent = unicode(content, encodingUsed, 'ignore')
-            return fetchUrl, encodingUsed + '-' + encodingSrc, ucontent
         except Exception, err:
             response = 'Error on fetching data from %s.' % (self.url, )
             logging.exception(response)
-            return fetchUrl, encodingUsed + '-' + encodingSrc, ''
+            ucontent = ''
+        return fetchUrl, '%s-%s' % (encodingUsed, encodingSrc), ucontent
 
 class BasicAuthContentFetcher(ContentFetcher):
     def __init__(self, url, username, password, encoding=None):
