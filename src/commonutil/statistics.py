@@ -6,12 +6,14 @@ from configmanager import cmapi
 
 def increaseIncomingBandwidth(bytes):
     inbandwidth = cmapi.getItemValue('inbandwidth', {})
-    nnow = datetime.datetime.now(tz=pytz.utc)
 
     allband = inbandwidth.get('all')
     if not allband:
         allband = {}
-        allband['start'] = nnow
+        # astimezone() cannot be applied to a naive datetime
+        # jsonpickle does not support timezone
+        # so we use utcnow to generate naive datetime
+        allband['start'] = datetime.datetime.utcnow()
         inbandwidth['all'] = allband
     allband['bytes'] = allband.get('bytes', 0) + bytes
     allband['fetch'] = allband.get('fetch', 0) + 1
@@ -21,6 +23,7 @@ def increaseIncomingBandwidth(bytes):
         timezonename = 'US/Pacific'
         inbandwidth['tz'] = timezonename
 
+    nnow = datetime.datetime.now(tz=pytz.utc)
     tzdate = nnow.astimezone(pytz.timezone(timezonename))
     key = tzdate.strftime('%Y%m%d')
 
