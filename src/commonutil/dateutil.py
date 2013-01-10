@@ -40,3 +40,6 @@ def date2duration(value, messageconfig=None):
         return _getUnitMessage(messageconfig, hours, 'hour')
     return _getUnitMessage(messageconfig, minutes, 'minute')
 
+def getDateAs14(value):
+    return value.strftime('%Y%m%d%H%M%S')
+

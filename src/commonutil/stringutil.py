@@ -12,3 +12,6 @@ def calculateHash(values):
             lines.append(value)
     return md5(''.join(lines)).hexdigest()
 
+def getMaxOrder():
+    return chr(126) # ~
+
