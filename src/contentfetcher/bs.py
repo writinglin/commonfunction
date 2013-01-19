@@ -12,6 +12,7 @@ import contentfetcher.config as globalconfig
 _PATTERN_MATCH_BODY = re.compile(r'^([\s\S]+)<body', re.IGNORECASE|re.DOTALL)
 _PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
 _PATTERN_MATCH_ENCODING = re.compile(r'<meta[^>]+charset="([^>]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
+_PATTERN_MATCH_REFRESH_URL = re.compile(r'<meta http-equiv="refresh"[^>]+content="[^>]*URL=([^>]+)"[^>]*>', re.IGNORECASE)
 
 def _getEncodingFromContentType(contentType):
     if not contentType:
@@ -61,12 +62,10 @@ class ContentFetcher(object):
     def authenticate(self, req):        
         pass
 
-    def fetch(self):
-        fetchUrl = None
+    def _fetch(self, fetchUrl):
         encodingUsed = self.encoding
         encodingSrc = 'self'
         try:
-            fetchUrl = self.url
             req = urllib2.Request(fetchUrl)
             self.authenticate(req)
             if self.useragent:
@@ -101,7 +100,26 @@ class ContentFetcher(object):
             response = 'Error on fetching data from %s.' % (self.url, )
             logging.exception(response)
             ucontent = ''
-        return fetchUrl, '%s-%s' % (encodingUsed, encodingSrc), ucontent
+        return fetchUrl, encodingSrc, encodingUsed, ucontent
+
+    def fetch(self):
+        oldContent = None
+        fetchUrl = self.url
+        fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl)
+        if content:
+            m = _PATTERN_MATCH_REFRESH_URL.search(content)
+            if m:
+                fetchUrl = m.group(1).strip()
+                logging.info('Redirect to: %s.' % (fetchUrl, ))
+                oldContent = content
+                fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl)
+        return {
+            'url': fetchUrl,
+            'encoding': encodingUsed,
+            'encoding.src': encodingSrc,
+            'content': content,
+            'content.old': oldContent,
+        }
 
 class BasicAuthContentFetcher(ContentFetcher):
     def __init__(self, url, username, password, encoding=None):
