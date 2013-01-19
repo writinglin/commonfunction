@@ -125,7 +125,7 @@ class ConfigManager(BasicManager):
         partvalues = []
         for i in range(partcount):
             cachekey = self._getCacheKey(keyname, part=i)
-            dbkey = self._getCacheKey(keyname, part=i)
+            dbkey = self._getDbKey(keyname, part=i)
             value = super(ConfigManager, self).getItemValue(
                             cachekey=cachekey, dbkey=dbkey, jsonType=False)
             partvalues.append(value)
