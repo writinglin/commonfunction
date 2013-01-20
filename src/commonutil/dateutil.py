@@ -43,3 +43,7 @@ def date2duration(value, messageconfig=None):
 def getDateAs14(value):
     return value.strftime('%Y%m%d%H%M%S')
 
+def getHoursAs14(hours):
+    start = datetime.datetime.utcnow() - datetime.timedelta(hours=hours)
+    return getDateAs14(start)
+
