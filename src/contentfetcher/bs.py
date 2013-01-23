@@ -3,16 +3,17 @@ import base64
 import logging
 import re
 import urllib2
+import urlparse
 
 import chardet
 import lxml.html
 
 import contentfetcher.config as globalconfig
 
-_PATTERN_MATCH_BODY = re.compile(r'^([\s\S]+)<body', re.IGNORECASE|re.DOTALL)
+_PATTERN_MATCH_BODY = re.compile(r'^(.+)<body', re.IGNORECASE|re.DOTALL)
 _PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
 _PATTERN_MATCH_ENCODING = re.compile(r'<meta[^>]+charset="([^>]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
-_PATTERN_MATCH_REFRESH_URL = re.compile(r'<meta http-equiv="refresh"[^>]+content="[^>]*URL=([^>]+)"[^>]*>', re.IGNORECASE)
+_PATTERN_MATCH_REFRESH_URL = re.compile(r'<meta http-equiv="refresh"[^>]+content="(\d+);URL=([^>]+)"[^>]*>', re.IGNORECASE)
 
 def _getEncodingFromContentType(contentType):
     if not contentType:
@@ -109,10 +110,14 @@ class ContentFetcher(object):
         if content:
             m = _PATTERN_MATCH_REFRESH_URL.search(content)
             if m:
-                fetchUrl = m.group(1).strip()
-                logging.info('Redirect to: %s.' % (fetchUrl, ))
-                oldContent = content
-                fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl)
+                seconds = int(m.group(1).strip())
+                redirectUrl = m.group(2).strip()
+                if seconds < 10:
+                    redirectUrl = urlparse.urljoin(fetchUrl, redirectUrl)
+                    logging.info('Redirect to: %s; old content length: %s.' %
+                                    (redirectUrl, len(content)))
+                    oldContent = content
+                    fetchUrl, encodingSrc, encodingUsed, content = self._fetch(redirectUrl)
         return {
             'url': fetchUrl,
             'encoding': encodingUsed,
