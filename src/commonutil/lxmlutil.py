@@ -1,3 +1,4 @@
+import lxml.html
 
 def getFullPrevious(element):
     previous = None
@@ -14,4 +15,24 @@ def getFullNext(element):
         if next is None:
             element = element.getparent()
     return next
+
+"""
+text node can be attached as tail of comment or script node,
+this kind of text node is visible to user.
+"""
+def isVisibleElement(element):
+    if isinstance(element, lxml.html.HtmlComment):
+        return False
+    if isinstance(element, lxml.html.HtmlElement) and element.tag == 'script':
+        return False
+    return True
+
+def getBlockParent(element):
+    parent = element
+    blocktags = ['div', 'p']
+    while parent is not None:
+        if parent.tag in blocktags:
+            return parent
+        parent = parent.getparent()
+    return None
 
