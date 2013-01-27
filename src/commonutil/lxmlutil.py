@@ -23,7 +23,8 @@ this kind of text node is visible to user.
 def isVisibleElement(element):
     if isinstance(element, lxml.html.HtmlComment):
         return False
-    if isinstance(element, lxml.html.HtmlElement) and element.tag == 'script':
+    tags = ['script', 'style', 'meta', 'link']
+    if isinstance(element, lxml.html.HtmlElement) and element.tag in tags:
         return False
     return True
 
