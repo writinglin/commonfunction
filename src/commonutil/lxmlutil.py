@@ -30,7 +30,7 @@ def isVisibleElement(element):
 
 def getBlockParent(element):
     parent = element
-    blocktags = ['div', 'p']
+    blocktags = ['div', 'p', 'td']
     while parent is not None:
         if parent.tag in blocktags:
             return parent
