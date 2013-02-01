@@ -1,4 +1,5 @@
 import lxml.html
+import lxml.html.clean
 
 def getFullPrevious(element):
     previous = None
@@ -36,4 +37,12 @@ def getBlockParent(element):
             return parent
         parent = parent.getparent()
     return None
+
+def getCleanText(element):
+    cleaner = lxml.html.clean.Cleaner()
+    celement = cleaner.clean_html(element)
+    content = celement.text_content()
+    if not content:
+        return content
+    return content.strip()
 
