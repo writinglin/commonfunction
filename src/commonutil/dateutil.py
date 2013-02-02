@@ -1,7 +1,7 @@
 import datetime
 
-def parseUtc14(utc14):
-    return datetime.datetime.strptime(utc14, '%Y%m%d%H%M%S')
+def parseDate14(date14):
+    return datetime.datetime.strptime(date14, '%Y%m%d%H%M%S')
 
 def _getUnitMessage(config, value, unit):
     if config.get('plural'):

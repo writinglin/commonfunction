@@ -22,6 +22,7 @@ class BasicHandler(webapp2.RequestHandler):
             for key, value in self.extraValues.iteritems():
                 if key not in templateValues:
                     templateValues[key] = value
+        templateValues['request'] = self.request
         content = self.jinja2.render_template(template, **templateValues)
         self.response.out.write(content)
 
