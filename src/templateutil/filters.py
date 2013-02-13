@@ -1,10 +1,10 @@
 from commonutil import dateutil
 
-def utc14duration(utc14):
+def utc14duration(utc14, durationconfig=None):
     if not utc14:
         return ''
     value = dateutil.parseDate14(utc14)
-    return dateutil.date2duration(value)
+    return dateutil.date2duration(value, durationconfig)
 
 def d14format(date14):
     if not date14:
