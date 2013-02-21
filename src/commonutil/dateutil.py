@@ -1,4 +1,5 @@
 import datetime
+import re
 
 def parseDate14(date14):
     return datetime.datetime.strptime(date14, '%Y%m%d%H%M%S')
@@ -46,4 +47,64 @@ def getDateAs14(value):
 def getHoursAs14(hours):
     start = datetime.datetime.utcnow() - datetime.timedelta(hours=hours)
     return getDateAs14(start)
+
+ZERO = datetime.timedelta(0)
+
+class UTC(datetime.tzinfo):
+    """UTC"""
+
+    def utcoffset(self, dt):
+        return ZERO
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return ZERO
+
+def _matchDateformat1(value):
+    # 'Sat Feb 26 08:43:46 +0000 2011'
+    match_ptn = r'^[a-zA-Z]{3} (?P<month>[a-zA-Z]{3}) (?P<date>\d{2}) (?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}) (?P<timezone>[+-]\d{4}) (?P<year>\d{4})$'
+    return re.match(match_ptn, value)
+
+def _matchDateformat2(value):
+    # "Fri, 25 Feb 2011 21:33:54 -0800"
+    # "Fri, 13 Aug 2010 10:21:45 PDT"
+    # "Fri, 26 Jan 2007 14:28:14 PST"
+    match_ptn = r'^[a-zA-Z]{3}, (?P<date>\d{2}) (?P<month>[a-zA-Z]{3}) (?P<year>\d{4}) (?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}) (?P<timezone>[+-]\d{4}|[a-zA-Z]{3})$'
+    return re.match(match_ptn, value)
+
+TIMEZONES = {'PST': -8,
+             'PDT': -7,
+             'GMT': 0,
+             }
+
+def jsDate2utc14(date_str):
+    m = _matchDateformat1(date_str)
+    if not m:
+        m = _matchDateformat2(date_str)
+    if not m:
+        return None
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    date = int(m.group('date'), 10)
+    month = months.index(m.group('month')) + 1
+    year = int(m.group('year'), 10)
+    hour = int(m.group('hour'), 10)
+    minute = int(m.group('minute'), 10)
+    seconds = int(m.group('second'), 10)
+    tz = TIMEZONES.get(m.group('timezone'))
+    if tz is not None:
+        offset = tz * 60
+    else:
+        try:
+            tz = int(m.group('timezone'), 10)
+            if tz < 0:
+                offset = -(-tz // 100 * 60 + (- tz % 100))
+            else:
+                offset = tz // 100 * 60 + tz % 100
+        except:
+            return None
+    utc = datetime.datetime(year, month, date,
+                             hour, minute, seconds, 0, UTC()) - datetime.timedelta(minutes=offset)
+    return utc.strftime('%Y%m%d%H%M%S')
 
