@@ -30,9 +30,6 @@ function confirmRemove() {
     <br/><input name="action" onclick="return confirmRemove();" type="submit" value="Remove" />
     <input name="action" type="submit" value="Save" />
     </form>
-    {% for item in items %}
-        <br/><br/>{{ item.key }}: {{ item.value }}
-    {% endfor %}
   </body>
 </html>
 
