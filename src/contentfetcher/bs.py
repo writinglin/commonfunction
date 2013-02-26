@@ -13,7 +13,7 @@ import contentfetcher.config as globalconfig
 _PATTERN_MATCH_BODY = re.compile(r'^(.+)<body', re.IGNORECASE|re.DOTALL)
 _PATTERN_MATCH_CONTENTTYPE = re.compile(r'<meta[^>]+http\-equiv="Content\-Type"[^>]+content="([^"]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
 _PATTERN_MATCH_ENCODING = re.compile(r'<meta[^>]+charset="([^>]+)"[^>]*>', re.IGNORECASE|re.DOTALL)
-_PATTERN_MATCH_REFRESH_URL = re.compile(r'<meta http-equiv="refresh"[^>]+content="(\d+);URL=([^>]+)"[^>]*>', re.IGNORECASE)
+_PATTERN_MATCH_REFRESH_URL = re.compile(r'<meta http-equiv="refresh"[^>]+content="(\d+);[^>]*URL=([^>]+)"[^>]*>', re.IGNORECASE)
 
 def _getEncodingFromContentType(contentType):
     if not contentType:
@@ -71,8 +71,9 @@ class ContentFetcher(object):
             self.authenticate(req)
             if self.useragent:
                 req.add_header('User-agent', self.useragent)
-            for key, value in self.header.iteritems():
-                req.add_header(key, value)
+            if self.header:
+                for key, value in self.header.iteritems():
+                    req.add_header(key, value)
             handler = urllib2.HTTPHandler()
             opener = urllib2.build_opener(handler)
             res = opener.open(req, timeout=self.timeout)
@@ -106,18 +107,22 @@ class ContentFetcher(object):
     def fetch(self):
         oldContent = None
         fetchUrl = self.url
-        fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl)
-        if content:
+        _MAX_REDIRECT_COUNT = 10
+        for i in range(_MAX_REDIRECT_COUNT):
+            fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl)
+            if not content:
+                break
             m = _PATTERN_MATCH_REFRESH_URL.search(content)
-            if m:
-                seconds = int(m.group(1).strip())
-                redirectUrl = m.group(2).strip()
-                if seconds < 10:
-                    redirectUrl = urlparse.urljoin(fetchUrl, redirectUrl)
-                    logging.info('Redirect to: %s; old content length: %s.' %
-                                    (redirectUrl, len(content)))
-                    oldContent = content
-                    fetchUrl, encodingSrc, encodingUsed, content = self._fetch(redirectUrl)
+            if not m:
+                break
+            seconds = int(m.group(1).strip())
+            redirectUrl = m.group(2).strip()
+            if seconds < 10:
+                redirectUrl = urlparse.urljoin(fetchUrl, redirectUrl)
+                logging.info('Redirect to: %s; old content length: %s.' %
+                                (redirectUrl, len(content)))
+                oldContent = content
+                fetchUrl = redirectUrl
         return {
             'url': fetchUrl,
             'encoding': encodingUsed,
