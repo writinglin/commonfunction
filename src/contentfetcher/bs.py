@@ -8,6 +8,8 @@ import urlparse
 import chardet
 import lxml.html
 
+from commonutil import statistics
+
 import contentfetcher.config as globalconfig
 
 _PATTERN_MATCH_BODY = re.compile(r'^(.+)<body', re.IGNORECASE|re.DOTALL)
@@ -112,6 +114,7 @@ class ContentFetcher(object):
             fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl)
             if not content:
                 break
+            statistics.increaseIncomingBandwidth(len(content))
             m = _PATTERN_MATCH_REFRESH_URL.search(content)
             if not m:
                 break

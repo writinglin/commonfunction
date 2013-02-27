@@ -5,7 +5,8 @@ from pytz.gae import pytz
 from configmanager import cmapi
 
 def increaseIncomingBandwidth(bytes):
-    inbandwidth = cmapi.getItemValue('inbandwidth', {})
+    itemKey = '~.inbandwidth'
+    inbandwidth = cmapi.getItemValue(itemKey, {})
 
     allband = inbandwidth.get('all')
     if not allband:
@@ -46,5 +47,5 @@ def increaseIncomingBandwidth(bytes):
         current['fetch'] += 1
         current['bytes'] += bytes
 
-    cmapi.saveItem('inbandwidth', inbandwidth)
+    cmapi.saveItem(itemKey, inbandwidth)
 
