@@ -4,6 +4,8 @@ Save item value to memcache to improve performance.
 Don't take concurrency into condideration. Please take care.
 """
 import logging
+import random
+
 from google.appengine.api import memcache
 from google.appengine.ext import db
 
@@ -12,7 +14,7 @@ import jsonpickle
 from commonutil import jsonutil
 from . import models
 
-MAX_ITEM_SIZE = 1024 * 900
+MAX_ITEM_SIZE = 1024 * 800
 PART_KEY_SUFFIX = '.pend'
 
 """
@@ -69,10 +71,18 @@ class BasicManager(object):
         else:
             cachevalue = jsonvalue
             dbvalue = jsonpickle.encode(jsonvalue)
-        memcache.set(cachekey, cachevalue)
         item = self.modelclass(key_name=dbkey, value=dbvalue)
-        item.put()
-        return True
+        trycount = 3
+        success = False
+        for i in range(trycount):
+            try:
+                memcache.set(cachekey, cachevalue)
+                item.put()
+                success = True
+                break
+            except Exception:
+                logging.exception('Failed to save data, left: %s.' % (trycount - 1 - i,))
+        return success
 
 
 """
@@ -95,20 +105,29 @@ class ConfigManager(BasicManager):
             items.append({'key': dbkey, 'value': fstr,})
         return sorted(items, key=lambda item: item['key'])
 
-    def _getCacheKey(self, keyname, part=-1):
+    def _getCacheKey(self, keyname, randomId=None, part=-1):
         cachekey = super(ConfigManager, self)._getCacheKey(keyname)
         if part < 0:
             return cachekey
-        return '%s.%s%s' % (cachekey, part, PART_KEY_SUFFIX)
+        if randomId:
+            return '%s.%s.%s%s' % (cachekey, randomId, part, PART_KEY_SUFFIX)
+        else:
+            return '%s.%s%s' % (cachekey, part, PART_KEY_SUFFIX)
 
-    def _getDbKey(self, keyname, part=-1):
+    def _getDbKey(self, keyname, randomId=None, part=-1):
         dbkey = super(ConfigManager, self)._getDbKey(keyname)
         if part < 0:
             return dbkey
-        return '%s.%s%s' % (dbkey, part, PART_KEY_SUFFIX)
+        if randomId:
+            return '%s.%s.%s%s' % (dbkey, randomId, part, PART_KEY_SUFFIX)
+        else:
+            return '%s.%s%s' % (dbkey, part, PART_KEY_SUFFIX)
 
     def _getPartCount(self, jsonvalue):
         return jsonvalue.get('partcount')
+
+    def _getRandomId(self, jsonvalue):
+        return jsonvalue.get('randomid')
 
     def _isBigItem(self, jsonvalue):
         return type(jsonvalue) == dict and bool(self._getPartCount(jsonvalue))
@@ -122,37 +141,34 @@ class ConfigManager(BasicManager):
         if not self._isBigItem(mainValue):
             return mainValue
         partcount = self._getPartCount(mainValue)
+        randomId = self._getRandomId(mainValue)
         partvalues = []
         for i in range(partcount):
-            cachekey = self._getCacheKey(keyname, part=i)
-            dbkey = self._getDbKey(keyname, part=i)
+            cachekey = self._getCacheKey(keyname, randomId=randomId, part=i)
+            dbkey = self._getDbKey(keyname, randomId=randomId, part=i)
             value = super(ConfigManager, self).getItemValue(
                             cachekey=cachekey, dbkey=dbkey, jsonType=False)
             partvalues.append(value)
         mainstr = ''.join(partvalues)
         return jsonpickle.decode(mainstr)
 
-    def _getPartCountByKey(self, keyname):
-        mainValue = super(ConfigManager, self).getItemValue(keyname)
-        if not mainValue:
-            return 0
-        if self._isBigItem(mainValue):
-            return self._getPartCount(mainValue)
-        return 1
+    def _removeParts(self, keyname, mainValue):
+        if not self._isBigItem(mainValue):
+            return True
 
-    def _removePartItem(self, keyname, part):
-        cachekey = self._getCacheKey(keyname, part=part)
-        dbkey = self._getDbKey(keyname, part=part)
-        super(ConfigManager, self).removeItem(
-                        cachekey=cachekey, dbkey=dbkey)
+        partcount = self._getPartCount(mainValue)
+        randomId = self._getRandomId(mainValue)
+        for i in range(partcount):
+            cachekey = self._getCacheKey(keyname, randomId=randomId, part=i)
+            dbkey = self._getDbKey(keyname, randomId=randomId, part=i)
+            super(ConfigManager, self).removeItem(
+                            cachekey=cachekey, dbkey=dbkey)
+        return True
 
     def removeItem(self, keyname):
-        partcount = self._getPartCountByKey(keyname)
+        mainValue = super(ConfigManager, self).getItemValue(keyname)
         super(ConfigManager, self).removeItem(keyname)
-        if not self._isBigCount(partcount):
-            return True
-        for i in range(partcount):
-            self._removePartItem(keyname, i)
+        self._removeParts(keyname, mainValue)
         return True
 
     def _getPartCountByStr(self, strvalue):
@@ -163,38 +179,42 @@ class ConfigManager(BasicManager):
         return partcount
 
     def saveItem(self, keyname, jsonvalue):
-        oldPartCount = self._getPartCountByKey(keyname)
+        oldMainValue = super(ConfigManager, self).getItemValue(keyname)
 
         strvalue = jsonpickle.encode(jsonvalue)
         newPartCount = self._getPartCountByStr(strvalue)
 
+        success = True
+        if self._isBigCount(newPartCount):
+            # random id is used to avoid data corruption,
+            # (by concurrent visit or failure on some step).
+            randomId = random.randint(0, 1000)
+            valuelen = len(strvalue)
+            mainJson = {
+                    'partcount': newPartCount,
+                    'size': valuelen,
+                    'randomid': randomId,
+                }
+            for i in range(newPartCount):
+                cachekey = self._getCacheKey(keyname, randomId=randomId, part=i)
+                dbkey = self._getDbKey(keyname, randomId=randomId, part=i)
+                value = strvalue[MAX_ITEM_SIZE * i:
+                            min(valuelen, MAX_ITEM_SIZE * (i + 1))]
+                if not super(ConfigManager, self).saveItem(cachekey=cachekey,
+                                            dbkey=dbkey, strvalue=value):
+                    success = False
+                    break
+            if success:
+                if not super(ConfigManager, self).saveItem(keyname, jsonvalue=mainJson):
+                    success = False
+        else:
+            if not super(ConfigManager, self).saveItem(keyname, jsonvalue=jsonvalue):
+                success = False
+
         # remove the unreferenced part entities.
-        if self._isBigCount(oldPartCount) and newPartCount < oldPartCount:
-            if self._isBigCount(newPartCount):
-                deleteStart = newPartCount
-            else:
-                deleteStart = 0
-            for i in range(deleteStart, oldPartCount):
-                self._removePartItem(keyname, i)
-
-        if not self._isBigCount(newPartCount):
-            super(ConfigManager, self).saveItem(keyname, jsonvalue=jsonvalue)
-            return True
-
-        valuelen = len(strvalue)
-
-        mainJson = {'partcount': newPartCount, 'size': valuelen}
-        super(ConfigManager, self).saveItem(keyname, jsonvalue=mainJson)
-
-        for i in range(newPartCount):
-            cachekey = self._getCacheKey(keyname, i)
-            dbkey = self._getDbKey(keyname, i)
-            value = strvalue[MAX_ITEM_SIZE * i:
-                        min(valuelen, MAX_ITEM_SIZE * (i + 1))]
-            super(ConfigManager, self).saveItem(cachekey=cachekey,
-                                        dbkey=dbkey, strvalue=value)
-
-        return True
+        if success:
+            self._removeParts(keyname, oldMainValue)
+        return success
 
 DEFAULT_MANAGER = None
 REGISTERED_MODELS = {
