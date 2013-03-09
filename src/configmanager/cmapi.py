@@ -188,7 +188,15 @@ class ConfigManager(BasicManager):
         if self._isBigCount(newPartCount):
             # random id is used to avoid data corruption,
             # (by concurrent visit or failure on some step).
-            randomId = random.randint(0, 1000)
+            oldRandomId = None
+            if self._isBigCount(oldMainValue):
+                oldRandomId = self._getRandomId(oldMainValue)
+            while True:
+                randomId = random.randint(0, 1000)
+                if randomId == oldRandomId:
+                    logging.warn('Same random id: %s.' % (oldRandomId, ))
+                else:
+                    break
             valuelen = len(strvalue)
             mainJson = {
                     'partcount': newPartCount,
