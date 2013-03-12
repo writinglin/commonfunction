@@ -189,7 +189,7 @@ class ConfigManager(BasicManager):
             # random id is used to avoid data corruption,
             # (by concurrent visit or failure on some step).
             oldRandomId = None
-            if self._isBigCount(oldMainValue):
+            if self._isBigItem(oldMainValue):
                 oldRandomId = self._getRandomId(oldMainValue)
             while True:
                 randomId = random.randint(0, 1000)
