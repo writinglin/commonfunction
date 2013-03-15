@@ -2,6 +2,12 @@ import lxml.html
 import lxml.html.clean
 import pyquery
 
+utf8parser = lxml.etree.XMLParser(encoding='utf-8')
+
+def parseFromUnicode(unicodeStr):
+    s = unicodeStr.encode('utf-8')
+    return lxml.etree.fromstring(s, parser=utf8parser)
+
 def getFullPrevious(element):
     previous = None
     while previous is None and element is not None:
