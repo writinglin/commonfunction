@@ -1,4 +1,6 @@
 import datetime
+import logging
+
 from . import pageinfo
 from . import alexainfo
 from . import pagerankinfo
@@ -16,9 +18,9 @@ def getPage(url):
         if 'dmoz' in alexaInfo:
             result['dmoz'] = alexaInfo['dmoz']
 
-    # pagerankInfo = pagerankinfo.fetch(url)
-    # if pagerankInfo:
-    #    result['pagerank'] = pagerankInfo
+    pagerank = pagerankinfo.fetch(url)
+    if pagerank >= 0:
+        result['pagerank'] = pagerank
 
     if result:
         result['updated'] = datetime.datetime.utcnow()

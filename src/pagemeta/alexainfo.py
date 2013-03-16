@@ -35,7 +35,8 @@ def getDmozInfo(tree):
             dmoz['desc'] = desc
         categories = site.xpath('CATS/CAT/@ID')
         if categories:
-            dmoz['categories'] = categories
+            dmoz['categories'] = [lxmlutil.getPureString(category)
+                                    for category in categories]
     return dmoz
 
 def fetch(url):

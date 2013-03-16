@@ -7,15 +7,21 @@
 # pagerank2.py 0.1 - Public release
 import httplib
 import logging
+import re
 import urlparse
 
 # Settings
-prhost='toolbarqueries.google.com'
-prpath='/tbr?client=navclient-auto&ch=%s&features=Rank&q=info:%s'
+# toolbarqueries.google.com will forward request to
+#    toolbarqueries.google.com.hk if it finds the request
+#    is from cn.
+prhost = 'toolbarqueries.google.com.hk'
+prpath = '/tbr?client=navclient-auto&ch=%s&features=Rank&q=info:%s'
+
+_PATTERN_MATCH_RESULT = re.compile(r'Rank_\d+:\d+:(\d+)', re.IGNORECASE|re.DOTALL)
 
 # Function definitions
 def getHash(query):
-    SEED = "Mining PageRank is AGAINST GOOGLE'S TERMS OF SERVICE. Yes, I'm talking to you, scammer."
+    SEED = """Mining PageRank is AGAINST GOOGLE'S TERMS OF SERVICE. Yes, I'm talking to you, scammer."""
     Result = 0x01020345
     for i in range(len(query)):
         Result ^= ord(SEED[i%len(SEED)]) ^ ord(query[i])
@@ -29,10 +35,19 @@ def fetch(url):
     conn = httplib.HTTPConnection(prhost)
     hash = getHash(query)
     path = prpath % (hash, query)
-    conn.request("GET", path)
-    response = conn.getresponse()
-    data = response.read()
-    conn.close()
-    logging.info(data)
-    return data.split(":")[-1]
+    data = None
+    try:
+        conn.request('GET', path)
+        response = conn.getresponse()
+        data = response.read()
+        conn.close()
+    except Exception:
+        logging.exception('Failed to get page rank for %s.' % (query, ))
+    result = -1
+    if data:
+        data = data.strip()
+        matched = _PATTERN_MATCH_RESULT.match(data)
+        if matched:
+            result = int(matched.group(1))
+    return result
 

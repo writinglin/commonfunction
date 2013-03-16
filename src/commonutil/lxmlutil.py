@@ -1,12 +1,26 @@
-import lxml.html
-import lxml.html.clean
+import lxml
 import pyquery
 
 utf8parser = lxml.etree.XMLParser(encoding='utf-8')
 
+"""
+lxml.etree can not work with unicode
+Using specified parser can ignore the declared encoding in string.
+"""
 def parseFromUnicode(unicodeStr):
     s = unicodeStr.encode('utf-8')
     return lxml.etree.fromstring(s, parser=utf8parser)
+
+"""
+lxml.etree._ElementUnicodeResult can not be encoded by jsonpickle.
+jsonpickle.encode(lxml.etree._ElementUnicodeResult) always return null.
+json.dumps(lxml.etree._ElementUnicodeResult) works fine.
+lxml.etree._ElementUnicodeResult.strip() return basestring
+"""
+def getPureString(value):
+    if not isinstance(value, lxml.etree._ElementUnicodeResult):
+        return value
+    return value.strip()
 
 def getFullPrevious(element):
     previous = None
