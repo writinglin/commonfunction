@@ -33,9 +33,12 @@ def getDmozInfo(tree):
         desc = site.get('DESC')
         if desc:
             dmoz['desc'] = desc
-        categories = site.xpath('CATS/CAT/@ID')
+        categories = site.xpath('CATS/CAT')
+        # 'CATS/CAT/@ID' will return lxml.etree._ElementUnicodeResult
+        # but HtmlElement.get(attr) will return normal string
+        # TODO: testcase to validate it
         if categories:
-            dmoz['categories'] = [lxmlutil.getPureString(category)
+            dmoz['categories'] = [lxmlutil.getPureString(category.get('ID'))
                                     for category in categories]
     return dmoz
 

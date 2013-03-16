@@ -1,4 +1,5 @@
 import lxml
+import lxml.html.clean
 import pyquery
 
 utf8parser = lxml.etree.XMLParser(encoding='utf-8')
@@ -107,7 +108,7 @@ def getCleanText(element):
     celement = cleaner.clean_html(element)
     content = celement.text_content()
     if content:
-        return content.strip()
+        return getPureString(content)
     content = _getScriptConstantString(element)
     if content:
         return content.strip()
