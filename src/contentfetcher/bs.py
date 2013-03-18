@@ -5,6 +5,8 @@ import re
 import urllib2
 import urlparse
 
+from google.appengine.runtime import apiproxy_errors
+
 import chardet
 import lxml.html
 
@@ -65,7 +67,7 @@ class ContentFetcher(object):
     def authenticate(self, req):        
         pass
 
-    def _fetch(self, fetchUrl):
+    def _fetch(self, fetchUrl, feedback=None):
         encodingUsed = self.encoding
         encodingSrc = 'self'
         try:
@@ -100,18 +102,21 @@ class ContentFetcher(object):
                 encodingUsed = 'UTF-8'
                 encodingSrc = 'default'
             ucontent = unicode(content, encodingUsed, 'ignore')
+        except apiproxy_errors.OverQuotaError:
+            if feedback is not None:
+                feedback['overflow'] = True
         except Exception, err:
             response = 'Error on fetching data from %s.' % (self.url, )
             logging.exception(response)
             ucontent = ''
         return fetchUrl, encodingSrc, encodingUsed, ucontent
 
-    def fetch(self):
+    def fetch(self, feedback=None):
         oldContent = None
         fetchUrl = self.url
         _MAX_REDIRECT_COUNT = 10
         for i in range(_MAX_REDIRECT_COUNT):
-            fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl)
+            fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl, feedback)
             if not content:
                 break
             statistics.increaseIncomingBandwidth(len(content))
