@@ -7,7 +7,7 @@ import uuid
 
 from configmanager import cmapi
 
-def postData(url, data, tag=None, trycount=1, timeout=10):
+def postData(url, data, tag=None, trycount=1, timeout=10, feedback=None):
     data = copy.deepcopy(data)
     data['uuid'] = str(uuid.uuid4())
     success = False
@@ -15,14 +15,23 @@ def postData(url, data, tag=None, trycount=1, timeout=10):
     for i in range(trycount):
         try:
             f = urllib2.urlopen(url, jsonData, timeout=timeout)
+            returncode = f.getcode()
             f.read()
             f.close()
+            if feedback is not None and returncode != 200:
+                logging.error('servererror happens: %s.' % (url, ))
+                feedback['servererror'] = True
             success = True
             break
-        except Exception:
+        except urllib2.HTTPError, e:
+            if feedback is not None:
+                logging.error('servererror happens: %s, %s.' % (url, e.code))
+                feedback['servererror'] = True
+            success = True
+        except Exception, e:
             leftcount = trycount - i - 1
-            logging.exception('Failed to post data for %s, %s, lefted %s.' % (
-                               url, tag, leftcount, ))
+            logging.exception('Failed to post data for %s, %s, lefted %s: %s.' % (
+                               url, tag, leftcount, type(e)))
             if leftcount > 0:
                 time.sleep(1)
     return success
