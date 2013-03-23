@@ -21,13 +21,14 @@ def postData(url, data, tag=None, trycount=1, timeout=10, feedback=None):
             if feedback is not None and returncode != 200:
                 logging.error('servererror happens: %s.' % (url, ))
                 feedback['servererror'] = True
-            success = True
+            else:
+                success = True
             break
         except urllib2.HTTPError, e:
             if feedback is not None:
                 logging.error('servererror happens: %s, %s.' % (url, e.code))
                 feedback['servererror'] = True
-            success = True
+            break
         except Exception, e:
             leftcount = trycount - i - 1
             logging.exception('Failed to post data for %s, %s, lefted %s: %s.' % (
