@@ -1,0 +1,10 @@
+# Some page do redirect only at some certain browser
+<!--[if lte IE 6]>
+<meta http-equiv="refresh" content="0; url=/ie6" />
+<script type="text/javascript">
+/* <![CDATA[ */
+window.top.location = '/ie6';
+/* ]]> */
+</script>
+<![endif]-->
+

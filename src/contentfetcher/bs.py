@@ -115,11 +115,14 @@ class ContentFetcher(object):
         oldContent = None
         fetchUrl = self.url
         _MAX_REDIRECT_COUNT = 10
+        _MAX_REDIRECT_CONTENT_SIZE = 1024 * 2
         for i in range(_MAX_REDIRECT_COUNT):
             fetchUrl, encodingSrc, encodingUsed, content = self._fetch(fetchUrl, feedback)
             if not content:
                 break
             statistics.increaseIncomingBandwidth(len(content))
+            if len(content) > _MAX_REDIRECT_CONTENT_SIZE:
+                break
             m = _PATTERN_MATCH_REFRESH_URL.search(content)
             if not m:
                 break
