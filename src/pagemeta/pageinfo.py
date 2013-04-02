@@ -1,4 +1,4 @@
-
+import logging
 import lxml
 import pyquery
 
@@ -12,7 +12,11 @@ def fetch(url):
     content = fetchResult.get('content')
     if not content:
         return result
-    htmlelement = lxml.html.fromstring(content)
+    try:
+        htmlelement = lxml.html.fromstring(content)
+    except Exception:
+        logging.error('Failed to load html from content.')
+        return result
     match = pyquery.PyQuery(htmlelement)('head meta[name=keywords]')
     if match:
         mainElement = match[0]

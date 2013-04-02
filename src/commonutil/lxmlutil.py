@@ -1,3 +1,4 @@
+import re
 import lxml
 import lxml.html.clean
 import pyquery
@@ -113,4 +114,7 @@ def getCleanText(element):
     if content:
         return content.strip()
     return content
+
+def removeEncodingDeclaration(content):
+    return re.sub(r'<?xml[^>]+?>', '', content, 1)
 
