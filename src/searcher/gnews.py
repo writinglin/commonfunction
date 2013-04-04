@@ -52,6 +52,10 @@ def _gnewsItem2Page(item):
 def _parseGnews(responseText):
     return _parseGoogle(responseText, _gnewsItem2Page)
 
+def getSearchUrl(keyword):
+    searchUrl = 'http://news.google.com/news/search?q={q}'
+    return searchUrl.replace('{q}', urllib2.quote(keyword.encode('utf-8')))
+
 def search(keyword, large=False):
     url = _getUrl(keyword, large)
     responseText = _fetch(url)
