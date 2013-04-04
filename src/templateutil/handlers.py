@@ -12,6 +12,15 @@ class BasicHandler(webapp2.RequestHandler):
     def jinja2(self):
         return jinja2.get_jinja2(app=self.app)
 
+    def dispatch(self):
+        self.prepareBaseValues()
+        if self.doRedirection():
+            return
+        if self._redirectByDomain():
+            return
+        self.prepareValues()
+        super(BasicHandler, self).dispatch()
+
     def render(self, templateValues, template, contentType='text/html'):
         self.response.headers['Content-Type'] = contentType
         if self.site:
@@ -26,14 +35,16 @@ class BasicHandler(webapp2.RequestHandler):
         content = self.jinja2.render_template(template, **templateValues)
         self.response.out.write(content)
 
+    def doRedirection(self):
+        return False
+
     def prepareBaseValues(self):
         pass
 
     def prepareValues(self):
         pass
 
-    def prepare(self):
-        self.prepareBaseValues()
+    def _redirectByDomain(self):
         if self.site:
             domain = self.site.get('domain')
         else:
@@ -49,7 +60,6 @@ class BasicHandler(webapp2.RequestHandler):
                 url = self.request.url
                 logging.info('Redirect form %s to %s.' % (url, redirecturl))
                 self.redirect(redirecturl, permanent=True)
-                return False
-        self.prepareValues()
-        return True
+                return True
+        return False
 
