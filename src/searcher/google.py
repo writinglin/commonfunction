@@ -65,5 +65,8 @@ def _parseGnews(responseText):
 def search(keyword):
     url = _getUrl(keyword)
     responseText = _fetch(url)
-    return _parseGnews(responseText)
+    pages = _parseGnews(responseText)
+    if pages is None:
+        return []
+    return pages
 
