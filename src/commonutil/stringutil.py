@@ -1,5 +1,6 @@
 
 from md5 import md5
+import re
 
 def calculateHash(values):
     lines = []
@@ -14,4 +15,8 @@ def calculateHash(values):
 
 def getMaxOrder():
     return chr(126) # ~
+
+def contains(content, keyword):
+    pattern = re.escape(keyword)
+    return bool(re.search(pattern, content, re.IGNORECASE|re.DOTALL))
 
