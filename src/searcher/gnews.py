@@ -59,8 +59,11 @@ def getSearchUrl(keyword):
 def search(keyword, large=False):
     url = _getUrl(keyword, large)
     responseText = _fetch(url)
-    pages = _parseGnews(responseText)
-    if pages is None:
-        return []
-    return pages
+    pages = None
+    trycount = 3
+    for _ in range(trycount):
+        pages = _parseGnews(responseText)
+        if pages is not None:
+            break
+    return pages or []
 
