@@ -1,5 +1,6 @@
 
 from md5 import md5
+import logging
 import re
 
 def calculateHash(values):
@@ -19,4 +20,13 @@ def getMaxOrder():
 def contains(content, keyword):
     pattern = re.escape(keyword)
     return bool(re.search(pattern, content, re.IGNORECASE|re.DOTALL))
+
+def getFirstSentence(sentenceSeparators, content):
+    if not sentenceSeparators:
+        return ''
+    for separator in sentenceSeparators:
+        sentences = re.split(separator, content, 1)
+        if sentences:
+            return sentences[0] + sentenceSeparators[0]
+    return ''
 

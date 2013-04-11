@@ -1,3 +1,5 @@
+import json
+
 from commonutil import dateutil
 
 def utc14duration(utc14, durationconfig=None):
@@ -15,4 +17,7 @@ def d14format(date14):
     else:
         format = '%Y-%m-%d %H:%M:%S'
     return value.strftime(format)
+
+def tojson(value):
+    return json.dumps(value)
 

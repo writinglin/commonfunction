@@ -22,7 +22,9 @@ lxml.etree._ElementUnicodeResult.strip() return basestring
 def getPureString(value):
     if not isinstance(value, lxml.etree._ElementUnicodeResult):
         return value
-    return value.strip()
+    if not value:
+        return value
+    return (value + ' ').strip()
 
 def getFullPrevious(element):
     previous = None
@@ -104,10 +106,24 @@ def _getScriptConstantString(element):
         maxstr = _getConstantString(content, '\'')
     return maxstr
 
+"""
+lxml.html.clean.Cleaner has a bug.
+See "773715 lxml".
+"""
+def _getVisibleText(element):
+    result = ''
+    skipTags = ['script', 'style']
+    if element.text:
+        result += element.text
+    for childElement in element.getchildren():
+        if childElement.tag not in skipTags:
+            result += _getVisibleText(childElement)
+        if childElement.tail:
+            result += childElement.tail
+    return result
+
 def getCleanText(element):
-    cleaner = lxml.html.clean.Cleaner()
-    celement = cleaner.clean_html(element)
-    content = celement.text_content()
+    content = _getVisibleText(element)
     if content:
         return getPureString(content)
     content = _getScriptConstantString(element)
