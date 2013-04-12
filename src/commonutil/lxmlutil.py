@@ -20,10 +20,10 @@ json.dumps(lxml.etree._ElementUnicodeResult) works fine.
 lxml.etree._ElementUnicodeResult.strip() return basestring
 """
 def getPureString(value):
-    if not isinstance(value, lxml.etree._ElementUnicodeResult):
-        return value
     if not value:
-        return value
+        return ''
+    if not isinstance(value, lxml.etree._ElementUnicodeResult):
+        return value.strip()
     return (value + ' ').strip()
 
 def getFullPrevious(element):
