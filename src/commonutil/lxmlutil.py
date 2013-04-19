@@ -14,8 +14,6 @@ def parseFromUnicode(unicodeStr):
     return lxml.etree.fromstring(s, parser=utf8parser)
 
 """
-lxml.etree._ElementUnicodeResult can not be encoded by jsonpickle.
-jsonpickle.encode(lxml.etree._ElementUnicodeResult) always return null.
 json.dumps(lxml.etree._ElementUnicodeResult) works fine.
 lxml.etree._ElementUnicodeResult.strip() return basestring
 """

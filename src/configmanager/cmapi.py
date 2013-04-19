@@ -3,13 +3,12 @@ Save item value to memcache to improve performance.
 
 Don't take concurrency into condideration. Please take care.
 """
+import json
 import logging
 import random
 
 from google.appengine.api import memcache
 from google.appengine.ext import db
-
-import jsonpickle
 
 from commonutil import jsonutil
 from . import models
@@ -43,7 +42,7 @@ class BasicManager(object):
         configitem = self.modelclass.get_by_key_name(dbkey)
         if configitem:
             if jsonType:
-                cachevalue = jsonpickle.decode(configitem.value)
+                cachevalue = json.loads(configitem.value)
             else:
                 cachevalue = configitem.value
         if cachevalue is None:
@@ -70,7 +69,7 @@ class BasicManager(object):
             dbvalue = strvalue
         else:
             cachevalue = jsonvalue
-            dbvalue = jsonpickle.encode(jsonvalue)
+            dbvalue = json.dumps(jsonvalue)
         item = self.modelclass(key_name=dbkey, value=dbvalue)
         trycount = 3
         success = False
@@ -150,7 +149,7 @@ class ConfigManager(BasicManager):
                             cachekey=cachekey, dbkey=dbkey, jsonType=False)
             partvalues.append(value)
         mainstr = ''.join(partvalues)
-        return jsonpickle.decode(mainstr)
+        return json.loads(mainstr)
 
     def _removeParts(self, keyname, mainValue):
         if not self._isBigItem(mainValue):
@@ -181,7 +180,7 @@ class ConfigManager(BasicManager):
     def saveItem(self, keyname, jsonvalue):
         oldMainValue = super(ConfigManager, self).getItemValue(keyname)
 
-        strvalue = jsonpickle.encode(jsonvalue)
+        strvalue = json.dumps(jsonvalue)
         newPartCount = self._getPartCountByStr(strvalue)
 
         success = True

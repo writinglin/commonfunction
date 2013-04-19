@@ -1,7 +1,0 @@
-UTIL_PROJECT_SRC=$HOME/workspace-python/python-commonutil/src
-LIBRARY_SRC=$HOME/workspace-gae/commonfunction/src/library
-
-mkdir $LIBRARY_SRC
-
-ln -s $UTIL_PROJECT_SRC/jsonpickle $LIBRARY_SRC/jsonpickle
-

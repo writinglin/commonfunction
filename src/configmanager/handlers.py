@@ -1,10 +1,9 @@
+import json
 import logging
 import os
 
 from google.appengine.ext.webapp import template
 import webapp2
-
-import jsonpickle
 
 from . import cmapi
 
@@ -74,7 +73,7 @@ class MainPage(webapp2.RequestHandler):
                     message = 'Failed to delete value from cache and db.'
                 key = ''
             elif action == 'Save':
-                jsonvalue = jsonpickle.decode(value)
+                jsonvalue = json.loads(value)
                 if not cmapi.saveItem(key, jsonvalue, modelname=modelname):
                     message = 'Failed to put value into cache and db.'
         except ValueError:

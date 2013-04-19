@@ -1,6 +1,8 @@
 import datetime
 import logging
 
+from commonutil import dateutil
+
 from . import pageinfo
 from . import alexainfo
 from . import pagerankinfo
@@ -23,6 +25,6 @@ def getPage(url):
         result['pagerank'] = pagerank
 
     if result:
-        result['updated'] = datetime.datetime.utcnow()
+        result['updated'] = dateutil.getDateAs14(datetime.datetime.utcnow())
     return result
 

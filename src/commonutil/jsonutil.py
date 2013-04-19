@@ -1,6 +1,5 @@
 import json
-
-import jsonpickle
+import logging
 
 def getReadableString(jsonvalue):
     try:
@@ -8,8 +7,7 @@ def getReadableString(jsonvalue):
         # it doesn't support datetime.datetime
         result = json.dumps(jsonvalue, ensure_ascii=False, indent=4, sort_keys=True)
     except TypeError:
-        # use jsonpickle to dumps datetime, and use json.dumps to get control format
-        jsonvalue = json.loads(jsonpickle.encode(jsonvalue))
-        result = json.dumps(jsonvalue, ensure_ascii=False, indent=4, sort_keys=True)
+        logging.exception('TypeError: %s.' % (jsonvalue, ))
+        result = None
     return result
 

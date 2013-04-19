@@ -1,7 +1,7 @@
 import datetime
 
 from pytz.gae import pytz
-
+from commonutil import dateutil
 from configmanager import cmapi
 
 def increaseIncomingBandwidth(bytes):
@@ -11,10 +11,7 @@ def increaseIncomingBandwidth(bytes):
     allband = inbandwidth.get('all')
     if not allband:
         allband = {}
-        # astimezone() cannot be applied to a naive datetime
-        # jsonpickle does not support timezone
-        # so we use utcnow to generate naive datetime
-        allband['start'] = datetime.datetime.utcnow()
+        allband['start'] = dateutil.getDateAs14(datetime.datetime.utcnow())
         inbandwidth['all'] = allband
     allband['bytes'] = allband.get('bytes', 0) + bytes
     allband['fetch'] = allband.get('fetch', 0) + 1
