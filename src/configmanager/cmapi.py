@@ -37,17 +37,15 @@ class BasicManager(object):
             cachekey = self._getCacheKey(keyname)
             dbkey = self._getDbKey(keyname)
         cachevalue = memcache.get(cachekey)
-        if cachevalue is not None:
-            return cachevalue
-        configitem = self.modelclass.get_by_key_name(dbkey)
-        if configitem:
-            if jsonType:
-                cachevalue = json.loads(configitem.value)
-            else:
-                cachevalue = configitem.value
         if cachevalue is None:
-            cachevalue = defaultValue
-        memcache.set(cachekey, cachevalue)
+            configitem = self.modelclass.get_by_key_name(dbkey)
+            if configitem:
+                cachevalue = configitem.value
+            if cachevalue is None:
+                cachevalue = json.dumps(defaultValue)
+            memcache.set(cachekey, cachevalue)
+        if jsonType:
+            cachevalue = json.loads(cachevalue)
         return cachevalue
 
     def removeItem(self, keyname=None, cachekey=None, dbkey=None):
@@ -68,8 +66,8 @@ class BasicManager(object):
             cachevalue = strvalue
             dbvalue = strvalue
         else:
-            cachevalue = jsonvalue
             dbvalue = json.dumps(jsonvalue)
+            cachevalue = dbvalue
         item = self.modelclass(key_name=dbkey, value=dbvalue)
         trycount = 3
         success = False
