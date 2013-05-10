@@ -28,6 +28,7 @@ class BasicHandler(webapp2.RequestHandler):
         user = users.get_current_user()
         if user:
             templateValues['user'] = user
+            templateValues['useradmin'] = users.is_current_user_admin()
         templateValues['site'] = self.site
         templateValues['i18n'] = self.i18n
         if self.extraValues:
