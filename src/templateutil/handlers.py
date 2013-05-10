@@ -1,11 +1,12 @@
 import logging
 
+from google.appengine.api import users
 import webapp2
 from webapp2_extras import jinja2
 
 class BasicHandler(webapp2.RequestHandler):
-    site = None
-    i18n = None
+    site = {}
+    i18n = {}
     extraValues = {}
 
     @webapp2.cached_property
@@ -23,10 +24,12 @@ class BasicHandler(webapp2.RequestHandler):
 
     def render(self, templateValues, template, contentType='text/html'):
         self.response.headers['Content-Type'] = contentType
-        if self.site:
-            templateValues['site'] = self.site
-        if self.i18n:
-            templateValues['i18n'] = self.i18n
+        templateValues['request'] = self.request
+        user = users.get_current_user()
+        if user:
+            templateValues['user'] = user
+        templateValues['site'] = self.site
+        templateValues['i18n'] = self.i18n
         if self.extraValues:
             for key, value in self.extraValues.iteritems():
                 if key not in templateValues:

@@ -1,18 +1,14 @@
 import json
 import logging
-import os
 
-from google.appengine.ext.webapp import template
-import webapp2
-
+from templateutil.handlers import BasicHandler
 from . import cmapi
 
-class MainPage(webapp2.RequestHandler):
+class MainPage(BasicHandler):
 
-    def _render(self, templateValues):
-        self.response.headers['Content-Type'] = 'text/html'
-        path = os.path.join(os.path.dirname(__file__), 'templates', 'index.html')
-        self.response.out.write(template.render(path, templateValues))
+    def prepareBaseValues(self):
+        self.site = cmapi.getItemValue('site', {'name': 'Site Name'})
+        self.i18n = cmapi.getItemValue('i18n', {'home': 'Home'})
 
     def get(self, message='', key=''):
         if not key:
@@ -46,7 +42,7 @@ class MainPage(webapp2.RequestHandler):
             'items': items,
             'message': message,
         }
-        self._render(templateValues)
+        self.render(templateValues, 'index.html')
 
     def post(self):
         modelname = self.request.get('modelname')
