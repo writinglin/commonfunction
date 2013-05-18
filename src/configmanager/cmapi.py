@@ -10,7 +10,6 @@ import random
 from google.appengine.api import memcache
 from google.appengine.ext import db
 
-from commonutil import jsonutil
 from . import models
 
 MAX_ITEM_SIZE = 1024 * 800
@@ -41,10 +40,11 @@ class BasicManager(object):
             configitem = self.modelclass.get_by_key_name(dbkey)
             if configitem:
                 cachevalue = configitem.value
-            if cachevalue is None:
+            if cachevalue is None and defaultValue is not None:
                 cachevalue = json.dumps(defaultValue)
-            memcache.set(cachekey, cachevalue)
-        if jsonType:
+            if cachevalue is not None:
+                memcache.set(cachekey, cachevalue)
+        if jsonType and cachevalue is not None:
             cachevalue = json.loads(cachevalue)
         return cachevalue
 
@@ -98,9 +98,17 @@ class ConfigManager(BasicManager):
                 continue
             # db key can be used as key name.
             value = self.getItemValue(dbkey)
-            fstr = jsonutil.getReadableString(value)
-            items.append({'key': dbkey, 'value': fstr,})
-        return sorted(items, key=lambda item: item['key'])
+            items.append({'key': dbkey, 'value': value,})
+        return items
+
+    def getModelKeys(self):
+        items = []
+        for item in self.modelclass.all():
+            dbkey = item.key().name()
+            if dbkey.endswith(PART_KEY_SUFFIX):
+                continue
+            items.append(dbkey)
+        return items
 
     def _getCacheKey(self, keyname, randomId=None, part=-1):
         cachekey = super(ConfigManager, self)._getCacheKey(keyname)
@@ -233,7 +241,7 @@ def registerModel(modelclass):
     REGISTERED_MODELS[modelclass.__name__] = manager
 
 def getModelNames():
-    return sorted(REGISTERED_MODELS.keys())
+    return REGISTERED_MODELS.keys()
 
 def _getManager(modelname):
     if not modelname:
@@ -244,6 +252,9 @@ def _getManager(modelname):
 
 def getRawItems(modelname=None):
     return _getManager(modelname).getRawItems()
+
+def getModelKeys(modelname=None):
+    return _getManager(modelname).getModelKeys()
 
 def getItemValue(keyname, defaultValue=None, modelname=None):
     return _getManager(modelname).getItemValue(keyname, defaultValue)

@@ -6,6 +6,7 @@ _ROOT_SRC = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(os.path.join(_ROOT_SRC, 'library'))
 
 import configmanager.handlers
+import configmanager.handlersapi
 
 config = {}
 config['webapp2_extras.jinja2'] = {
@@ -14,6 +15,7 @@ config['webapp2_extras.jinja2'] = {
 
 app = webapp2.WSGIApplication([
 ('/admin/config/', configmanager.handlers.MainPage),
+('/admin/config/api/', configmanager.handlersapi.ModelData),
 ],
-debug=True, config=config)
+debug=os.environ['SERVER_SOFTWARE'].startswith('Dev'), config=config)
 

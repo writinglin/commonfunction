@@ -1,6 +1,7 @@
 import json
 import logging
 
+from commonutil import jsonutil
 from templateutil.handlers import BasicHandler
 from . import cmapi
 
@@ -11,20 +12,24 @@ class MainPage(BasicHandler):
         self.i18n = cmapi.getItemValue('i18n', {'home': 'Home'})
 
     def get(self, message='', key=''):
+        modelnames = cmapi.getModelNames()
+        modelnames.sort()
+
         if not key:
             key = self.request.get('selectedkey')
-        value = ''
 
         modelname = self.request.get('modelname')
         if modelname:
-            items = cmapi.getRawItems(modelname=modelname)
+            modelkeys = cmapi.getModelKeys(modelname=modelname)
+            modelkeys.sort()
             if key:
-                for item in items:
-                    if item['key'] == key:
-                        value = item['value']
-                        break
+                value = cmapi.getItemValue(key, modelname=modelname)
+                value = jsonutil.getReadableString(value)
+            else:
+                value = ''
         else:
-            items = []
+            modelkeys = []
+            value = ''
             message = 'Please select a model'
 
 
@@ -32,14 +37,12 @@ class MainPage(BasicHandler):
             key = ''
             value = ''
 
-        modelnames = cmapi.getModelNames()
-
         templateValues = {
             'modelname': modelname,
             'modelnames': modelnames,
+            'modelkeys': modelkeys,
             'key': key,
             'value': value,
-            'items': items,
             'message': message,
         }
         self.render(templateValues, 'index.html')
