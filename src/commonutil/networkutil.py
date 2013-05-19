@@ -5,7 +5,7 @@ import time
 import urllib2
 import uuid
 
-from configmanager import cmapi, models
+from configmanager import cmapi
 
 def postData(url, data, tag=None, trycount=1, timeout=10, feedback=None):
     data = copy.deepcopy(data)

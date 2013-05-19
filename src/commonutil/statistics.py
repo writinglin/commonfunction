@@ -5,8 +5,8 @@ from commonutil import dateutil
 from configmanager import cmapi
 
 def increaseIncomingBandwidth(bytes):
-    itemKey = '~.inbandwidth'
-    inbandwidth = cmapi.getItemValue(itemKey, {})
+    itemKey = 'inbandwidth'
+    inbandwidth = cmapi.getItemValue(itemKey, {}, modelname='RunStatus')
 
     allband = inbandwidth.get('all')
     if not allband:
@@ -44,5 +44,5 @@ def increaseIncomingBandwidth(bytes):
         current['fetch'] += 1
         current['bytes'] += bytes
 
-    cmapi.saveItem(itemKey, inbandwidth)
+    cmapi.saveItem(itemKey, inbandwidth, modelname='RunStatus')
 
