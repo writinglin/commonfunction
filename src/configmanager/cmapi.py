@@ -266,4 +266,5 @@ def removeItem(keyname, modelname=None):
     return _getManager(modelname).removeItem(keyname)
 
 registerModel(models.ConfigItem)
+registerModel(models.RunStatus)
 

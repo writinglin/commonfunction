@@ -5,7 +5,7 @@ import time
 import urllib2
 import uuid
 
-from configmanager import cmapi
+from configmanager import cmapi, models
 
 def postData(url, data, tag=None, trycount=1, timeout=10, feedback=None):
     data = copy.deepcopy(data)
@@ -40,7 +40,7 @@ def postData(url, data, tag=None, trycount=1, timeout=10, feedback=None):
 def isUuidHandled(uuid):
     if not uuid:
         return False
-    items = cmapi.getItemValue('~.uuids', [])
+    items = cmapi.getItemValue('uuids', [], modelname='RunStatus')
     if uuid in items:
         return True
     return False
@@ -49,8 +49,8 @@ def updateUuids(uuid):
     _MAX_ITEM_COUNT = 100
     if not uuid:
         return
-    items = cmapi.getItemValue('~.uuids', [])
+    items = cmapi.getItemValue('uuids', [], modelname='RunStatus')
     items.insert(0, uuid)
     items = items[:_MAX_ITEM_COUNT]
-    cmapi.saveItem('~.uuids', items)
+    cmapi.saveItem('uuids', items, modelname='RunStatus')
 
