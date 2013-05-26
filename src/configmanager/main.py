@@ -8,6 +8,11 @@ sys.path.append(os.path.join(_ROOT_SRC, 'library'))
 import configmanager.handlers
 import configmanager.handlersapi
 
+try:
+    import cmadmin
+except ImportError:
+    pass
+
 config = {}
 config['webapp2_extras.jinja2'] = {
     'template_path': os.path.join(_ROOT_SRC, 'html', 'templates-config'),
