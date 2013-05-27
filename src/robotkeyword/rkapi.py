@@ -2,6 +2,7 @@ import logging
 import re
 import urllib2
 
+from commonutil import stringutil
 from .import config
 
 def _getRawParameter(querystr, parametername):
@@ -17,8 +18,12 @@ def _getRawParameter(querystr, parametername):
     return keyword
 
 def _getUnquotedParameter(querystr, parametername):
-    keyword = _getRawParameter(querystr, parametername)
-    return urllib2.unquote(keyword)
+    try:
+        keyword = _getRawParameter(querystr, parametername)
+        return urllib2.unquote(keyword)
+    except Exception:
+        logging.exception('Error happened on _getUnquotedParameter: %s.' % (type(querystr),))
+        return None
 
 def getRefererKeyword(referer):
     if not referer:
@@ -34,6 +39,7 @@ def getRefererKeyword(referer):
     encoding = matched.get('encoding', 'utf8')
     keyword = _getUnquotedParameter(referer, parameter)
     if keyword:
+        keyword = stringutil.parseUnicode(keyword, encodings=[encoding])
         try:
             keyword = unicode(keyword, encoding)
         except Exception:

@@ -91,14 +91,14 @@ class ConfigManager(BasicManager):
         super(ConfigManager, self).__init__(modelclass)
 
     def getRawItems(self):
-        items = []
+        items = {}
         for item in self.modelclass.all():
             dbkey = item.key().name()
             if dbkey.endswith(PART_KEY_SUFFIX):
                 continue
             # db key can be used as key name.
             value = self.getItemValue(dbkey)
-            items.append({'key': dbkey, 'value': value,})
+            items[dbkey] = value
         return items
 
     def getModelKeys(self):

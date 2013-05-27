@@ -30,3 +30,12 @@ def getFirstSentence(sentenceSeparators, content):
             return sentences[0] + sentenceSeparators[0]
     return ''
 
+def parseUnicode(rawValue, encodings=[]):
+    defaultEncodings = ['utf8', 'gb2312', 'gbk']
+    for encoding in encodings + defaultEncodings:
+        try:
+            return rawValue.decode(encoding)
+        except UnicodeDecodeError:
+            pass
+    return None
+
