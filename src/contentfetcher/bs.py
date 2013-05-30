@@ -78,9 +78,7 @@ class ContentFetcher(object):
             if self.header:
                 for key, value in self.header.iteritems():
                     req.add_header(key, value)
-            handler = urllib2.HTTPHandler()
-            opener = urllib2.build_opener(handler)
-            res = opener.open(req, timeout=self.timeout)
+            res = urllib2.urlopen(req, timeout=self.timeout)
             # httpheaderEncoding = getEncodingFromResponse(res)
             content = res.read()
             res.close()

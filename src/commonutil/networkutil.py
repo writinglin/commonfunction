@@ -5,6 +5,8 @@ import time
 import urllib2
 import uuid
 
+from google.appengine.api.app_identity import get_application_id
+
 from configmanager import cmapi
 
 def postData(url, data, tag=None, trycount=1, timeout=10, feedback=None):
@@ -14,7 +16,10 @@ def postData(url, data, tag=None, trycount=1, timeout=10, feedback=None):
     jsonData = json.dumps(data)
     for i in range(trycount):
         try:
-            f = urllib2.urlopen(url, jsonData, timeout=timeout)
+            appname = get_application_id()
+            req = urllib2.Request(url, jsonData)
+            req.add_header('app', appname)
+            f = urllib2.urlopen(req, timeout=timeout)
             returncode = f.getcode()
             f.read()
             f.close()
