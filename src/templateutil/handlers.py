@@ -29,6 +29,7 @@ class BasicHandler(webapp2.RequestHandler):
         if user:
             templateValues['user'] = user
             templateValues['useradmin'] = users.is_current_user_admin()
+            templateValues['logouturl'] = users.create_logout_url('/')
         templateValues['site'] = self.site
         templateValues['i18n'] = self.i18n
         if self.extraValues:
