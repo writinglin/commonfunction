@@ -110,12 +110,12 @@ See "773715 lxml".
 """
 def _getVisibleText(element):
     result = ''
-    skipTags = ['script', 'style']
+    if not isVisibleElement(element):
+        return result
     if element.text:
         result += element.text
     for childElement in element.getchildren():
-        if childElement.tag not in skipTags:
-            result += _getVisibleText(childElement)
+        result += _getVisibleText(childElement)
         if childElement.tail:
             result += childElement.tail
     return result
