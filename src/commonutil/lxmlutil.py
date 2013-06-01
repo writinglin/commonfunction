@@ -1,4 +1,6 @@
+import logging
 import re
+
 import lxml
 import lxml.html.clean
 import pyquery
@@ -50,6 +52,9 @@ def isVisibleElement(element):
     tags = ['script', 'style', 'meta', 'link']
     if isinstance(element, lxml.html.HtmlElement) and element.tag in tags:
         return False
+    style = element.get('style')
+    if style and 'none' in style:
+        return False
     return True
 
 def getBlockParent(element):
@@ -68,12 +73,12 @@ a"b"c"d"e
 def _getConstantString(text, c):
     parts = text.split(c)
     i = 1
-    maxstr = None
+    maxstr = ''
     size = len(parts)
     if size % 2 == 0:# prevent unclose quote
         size -= 1
     if size < 3:
-        return None
+        return ''
     while i < size:
         if not maxstr:
             maxstr = parts[i]
@@ -94,11 +99,11 @@ document.write(view("content content"))
 def _getScriptConstantString(element):
     match = pyquery.PyQuery(element)('script')
     if not match:
-        return None
+        return ''
     script = match[0]
     content = script.text_content()
     if not content:
-        return None
+        return ''
     maxstr = _getConstantString(content, '"')
     if not maxstr:
         maxstr = _getConstantString(content, '\'')
@@ -131,4 +136,29 @@ def getCleanText(element):
 
 def removeEncodingDeclaration(content):
     return re.sub(r'<?xml[^>]+?>', '', content, 1)
+
+def findAllVisibleMatched(result, element, textFunc=None, tailFunc=None, funcResult=None):
+    added = False
+    visible = isVisibleElement(element)
+    if visible:
+        if not textFunc:
+            result.append(element)
+            added = True
+        elif textFunc and element.text:
+            testResult = textFunc(element.text)
+            if testResult:
+                result.append(element)
+                added = True
+                if funcResult is not None:
+                    funcResult.append(testResult)
+    if not added and tailFunc and element.tail:
+        testResult = tailFunc(element.tail)
+        if testResult:
+            result.append(element)
+            if funcResult is not None:
+                funcResult.append(testResult)
+    if not visible:
+        return
+    for child in element.getchildren():
+        findAllVisibleMatched(result, child, textFunc, tailFunc, funcResult)
 
