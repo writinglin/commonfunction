@@ -5,6 +5,15 @@ import lxml
 import lxml.html.clean
 import pyquery
 
+INLINE_TAGS = [
+'a', 'abbr', 'acronym', 'b', 'basefont',
+'bdo', 'big', 'br', 'cite', 'code', 'dfn',
+'em', 'font', 'i', 'img', 'input', 'kbd',
+'label', 'q', 's', 'samp', 'select', 'small',
+'span', 'strike', 'strong', 'sub', 'sup',
+'textarea', 'tt', 'u', 'var'
+]
+
 utf8parser = lxml.etree.XMLParser(encoding='utf-8')
 
 """
@@ -42,18 +51,23 @@ def getFullNext(element):
             element = element.getparent()
     return next
 
+def _hasHiddenStyle(element):
+    style = element.get('style')
+    if style and re.search(r'display:\s*none', style, flags=re.IGNORECASE):
+        return True
+    return False
+
 """
 text node can be attached as tail of comment or script node,
 this kind of text node is visible to user.
 """
 def isVisibleElement(element):
-    if isinstance(element, lxml.html.HtmlComment):
+    if isinstance(element, lxml.etree._Comment):
         return False
     tags = ['script', 'style', 'meta', 'link']
-    if isinstance(element, lxml.html.HtmlElement) and element.tag in tags:
+    if isinstance(element,  lxml.etree._Element) and element.tag in tags:
         return False
-    style = element.get('style')
-    if style and 'none' in style:
+    if _hasHiddenStyle(element):
         return False
     return True
 
