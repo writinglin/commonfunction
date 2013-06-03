@@ -26,12 +26,18 @@ class BasicHandler(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = contentType
         templateValues['request'] = self.request
         user = users.get_current_user()
+        analytics_code = self.site.get('analytics_code')
         if user:
             templateValues['user'] = user
-            templateValues['useradmin'] = users.is_current_user_admin()
-            templateValues['logouturl'] = users.create_logout_url('/')
+            templateValues['user_admin'] = users.is_current_user_admin()
+            if users.is_current_user_admin():
+                analytics_code = None
+            templateValues['logout_url'] = users.create_logout_url('/')
+        if 'ga' in self.request.GET:
+            analytics_code = None
         templateValues['site'] = self.site
         templateValues['i18n'] = self.i18n
+        templateValues['analytics_code'] = analytics_code
         if self.extraValues:
             for key, value in self.extraValues.iteritems():
                 if key not in templateValues:
