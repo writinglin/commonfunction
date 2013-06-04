@@ -126,17 +126,19 @@ def _getScriptConstantString(element):
 """
 lxml.html.clean.Cleaner has a bug.
 See "773715 lxml".
+return tail text event if the element is not visible, it
+is a bit wierd, but it is the only way tail can be found.
+tail is alway visible.
 """
 def _getVisibleText(element):
     result = ''
-    if not isVisibleElement(element):
-        return result
-    if element.text:
-        result += element.text
-    for childElement in element.getchildren():
-        result += _getVisibleText(childElement)
-        if childElement.tail:
-            result += childElement.tail
+    if isVisibleElement(element):
+        if element.text:
+            result += element.text
+        for childElement in element.getchildren():
+            result += _getVisibleText(childElement)
+    if element.tail:
+        result += element.tail
     return result
 
 def getCleanText(element):

@@ -40,9 +40,5 @@ def getRefererKeyword(referer):
     keyword = _getUnquotedParameter(referer, parameter)
     if keyword:
         keyword = stringutil.parseUnicode(keyword, encodings=[encoding])
-        try:
-            keyword = unicode(keyword, encoding)
-        except Exception:
-            keyword = None
     return keyword
 
