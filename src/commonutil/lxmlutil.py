@@ -151,10 +151,10 @@ def getCleanText(element):
 def removeEncodingDeclaration(content):
     return re.sub(r'<?xml[^>]+?>', '', content, 1)
 
-def findAllVisibleMatched(result, element, textFunc=None, tailFunc=None, funcResult=None):
+def findAllVisibleMatched(result, element, textFunc=None, tailFunc=None, funcResult=None, includeSelf=False):
     added = False
     visible = isVisibleElement(element)
-    if visible:
+    if includeSelf and visible:
         if not textFunc:
             result.append(element)
             added = True
@@ -165,7 +165,7 @@ def findAllVisibleMatched(result, element, textFunc=None, tailFunc=None, funcRes
                 added = True
                 if funcResult is not None:
                     funcResult.append(testResult)
-    if not added and tailFunc and element.tail:
+    if includeSelf and not added and tailFunc and element.tail:
         testResult = tailFunc(element.tail)
         if testResult:
             result.append(element)
@@ -174,5 +174,6 @@ def findAllVisibleMatched(result, element, textFunc=None, tailFunc=None, funcRes
     if not visible:
         return
     for child in element.getchildren():
-        findAllVisibleMatched(result, child, textFunc, tailFunc, funcResult)
+        findAllVisibleMatched(result, child, textFunc, tailFunc, funcResult,
+                                includeSelf=True)
 
