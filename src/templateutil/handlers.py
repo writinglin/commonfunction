@@ -35,6 +35,8 @@ class BasicHandler(webapp2.RequestHandler):
             templateValues['logout_url'] = users.create_logout_url('/')
         if 'ga' in self.request.GET:
             analytics_code = None
+        elif self.request.path.startswith('/admin/'):
+            analytics_code = None
         templateValues['site'] = self.site
         templateValues['i18n'] = self.i18n
         templateValues['analytics_code'] = analytics_code
