@@ -39,3 +39,6 @@ def parseUnicode(rawValue, encodings=[]):
             pass
     return None
 
+def transformSeparators(key):
+    return key.replace('-', '.')
+

@@ -41,7 +41,9 @@ def date2duration(value, messageconfig=None):
         return _getUnitMessage(messageconfig, hours, 'hour')
     return _getUnitMessage(messageconfig, minutes, 'minute')
 
-def getDateAs14(value):
+def getDateAs14(value=None):
+    if not value:
+        value = datetime.datetime.utcnow()
     return value.strftime('%Y%m%d%H%M%S')
 
 def getHoursAs14(hours):
@@ -107,4 +109,11 @@ def jsDate2utc14(date_str):
     utc = datetime.datetime(year, month, date,
                              hour, minute, seconds, 0, UTC()) - datetime.timedelta(minutes=offset)
     return utc.strftime('%Y%m%d%H%M%S')
+
+def getTodayStartAs14(timezone):
+    now = datetime.datetime.utcnow()
+    now += datetime.timedelta(hours=timezone)
+    now = datetime.datetime(now.year, now.month, now.day)
+    now -= datetime.timedelta(hours=timezone)
+    return now.strftime('%Y%m%d%H%M%S')
 
