@@ -110,7 +110,7 @@ For example:
 document.write(view("content content"))
 </script>
 """
-def _getScriptConstantString(element):
+def getScriptConstantString(element):
     match = pyquery.PyQuery(element)('script')
     if not match:
         return ''
@@ -121,6 +121,8 @@ def _getScriptConstantString(element):
     maxstr = _getConstantString(content, '"')
     if not maxstr:
         maxstr = _getConstantString(content, '\'')
+    if maxstr:
+        return maxstr.strip()
     return maxstr
 
 """
@@ -130,24 +132,24 @@ return tail text event if the element is not visible, it
 is a bit wierd, but it is the only way tail can be found.
 tail is alway visible.
 """
-def _getVisibleText(element):
+def _getVisibleText(element, withTail=False):
     result = ''
     if isVisibleElement(element):
         if element.text:
             result += element.text
         for childElement in element.getchildren():
-            result += _getVisibleText(childElement)
+            result += _getVisibleText(childElement, withTail=True)
     if element.tail:
         result += element.tail
     return result
 
+"""
+getCleanText should behave like text_content()
+"""
 def getCleanText(element):
     content = _getVisibleText(element)
     if content:
         return getPureString(content)
-    content = _getScriptConstantString(element)
-    if content:
-        return content.strip()
     return content
 
 def removeEncodingDeclaration(content):
