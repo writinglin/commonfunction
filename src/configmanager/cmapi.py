@@ -220,6 +220,7 @@ class ConfigManager(BasicManager):
             if success:
                 if not super(ConfigManager, self).saveItem(keyname, jsonvalue=mainJson):
                     success = False
+                    self._removeParts(keyname, mainJson)
         else:
             if not super(ConfigManager, self).saveItem(keyname, jsonvalue=jsonvalue):
                 success = False

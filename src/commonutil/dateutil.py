@@ -115,5 +115,10 @@ def getTodayStartAs14(timezone):
     now += datetime.timedelta(hours=timezone)
     now = datetime.datetime(now.year, now.month, now.day)
     now -= datetime.timedelta(hours=timezone)
-    return now.strftime('%Y%m%d%H%M%S')
+    return getDateAs14(now)
+
+def adjustDate14(date14, timezone):
+    value = parseDate14(date14)
+    value -= datetime.timedelta(hours=timezone)
+    return getDateAs14(value)
 
