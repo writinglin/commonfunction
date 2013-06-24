@@ -18,6 +18,10 @@ config['webapp2_extras.jinja2'] = {
     'template_path': os.path.join(_ROOT_SRC, 'html', 'templates-config'),
 }
 
+config['webapp2_extras.sessions'] = {
+    'secret_key': 'dsdfsdfdsffds',
+}
+
 app = webapp2.WSGIApplication([
 ('/admin/config/', configmanager.handlers.MainPage),
 ('/admin/config/api/', configmanager.handlersapi.ModelData),

@@ -3,6 +3,7 @@ import logging
 from google.appengine.api import users
 import webapp2
 from webapp2_extras import jinja2
+from webapp2_extras import sessions
 
 class BasicHandler(webapp2.RequestHandler):
     site = {}
@@ -14,13 +15,26 @@ class BasicHandler(webapp2.RequestHandler):
         return jinja2.get_jinja2(app=self.app)
 
     def dispatch(self):
-        self.prepareBaseValues()
-        if self.doRedirection():
-            return
-        if self._redirectByDomain():
-            return
-        self.prepareValues()
-        super(BasicHandler, self).dispatch()
+        # Get a session store for this request.
+        self.session_store = sessions.get_store(request=self.request)
+
+        try:
+            # Dispatch the request.
+            self.prepareBaseValues()
+            if self.doRedirection():
+                return
+            if self._redirectByDomain():
+                return
+            self.prepareValues()
+            super(BasicHandler, self).dispatch()
+        finally:
+            # Save all sessions.
+            self.session_store.save_sessions(self.response)
+
+    @webapp2.cached_property
+    def session(self):
+        # Returns a session using the default cookie key.
+        return self.session_store.get_session()
 
     def render(self, templateValues, template, contentType='text/html'):
         self.response.headers['Content-Type'] = contentType
@@ -33,7 +47,10 @@ class BasicHandler(webapp2.RequestHandler):
             if users.is_current_user_admin():
                 analytics_code = None
             templateValues['logout_url'] = users.create_logout_url('/')
-        if 'ga' in self.request.GET:
+        if self.session.get('ga'):
+            analytics_code = None
+        elif 'ga' in self.request.GET:
+            self.session['ga'] = True
             analytics_code = None
         elif self.request.path.startswith('/admin/'):
             analytics_code = None
