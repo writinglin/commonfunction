@@ -45,14 +45,14 @@ class BasicHandler(webapp2.RequestHandler):
             templateValues['user'] = user
             templateValues['user_admin'] = users.is_current_user_admin()
             if users.is_current_user_admin():
-                analytics_code = None
+                templateValues['ga_disabled'] = True
             templateValues['logout_url'] = users.create_logout_url('/')
         if self.session.get('ga'):
-            analytics_code = None
+            templateValues['ga_disabled'] = True
         elif 'ga' in self.request.GET:
             self.session['ga'] = True
-            analytics_code = None
-        elif self.request.path.startswith('/admin/'):
+            templateValues['ga_disabled'] = True
+        if templateValues.get('ga_disabled'):
             analytics_code = None
         templateValues['site'] = self.site
         templateValues['i18n'] = self.i18n
