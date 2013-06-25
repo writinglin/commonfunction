@@ -8,7 +8,6 @@
 import httplib
 import logging
 import re
-import urlparse
 
 # Settings
 # toolbarqueries.google.com will forward request to
@@ -30,8 +29,7 @@ def getHash(query):
     return '8%x' % Result
 
 def fetch(url):
-    parseresult = urlparse.urlparse(url)
-    query = parseresult.netloc
+    query = url
     conn = httplib.HTTPConnection(prhost)
     hash = getHash(query)
     path = prpath % (hash, query)
